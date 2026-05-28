@@ -1,0 +1,718 @@
+import React, { useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Globe,
+  Info,
+  Mail,
+  MessageCircle,
+  Phone,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from "lucide-react";
+
+type VisaItem = {
+  country: string;
+  time: string;
+  type: string;
+  validity: string;
+  maxStay: string;
+  govFee: number;
+  serviceFee: number;
+  countryCode?: string;
+  icon?: string;
+  keywords?: string[];
+};
+
+type VisaGroup = {
+  country: string;
+  countryCode?: string;
+  icon?: string;
+  items: VisaItem[];
+};
+
+
+const visaData: VisaItem[] = [
+  { country: "ארמניה", countryCode: "am", time: "עד 3 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת", validity: "21 ימים", maxStay: "עד 21 יום", govFee: 10, serviceFee: 25 },
+  { country: "ארמניה", countryCode: "am", time: "עד 3 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת", validity: "120 ימים", maxStay: "עד 120 יום", govFee: 15, serviceFee: 25 },
+  { country: "אוסטרליה", countryCode: "au", time: "עד 30 ימי עבודה", type: "ויזת תיירות אלקטרונית eVisa 600, כניסות מרובות", validity: "בהתאם לאישור הרשויות", maxStay: "בהתאם לאישור הרשויות, לרוב עד 3 חודשים", govFee: 200, serviceFee: 65 },
+  { country: "אוסטרליה", countryCode: "au", time: "עד 14-25 ימי עבודה", type: "ויזת עסקים אלקטרונית eVisa 600, כניסות מרובות", validity: "בהתאם לאישור הרשויות", maxStay: "לרוב עד 3 חודשים", govFee: 200, serviceFee: 65 },
+  { country: "אזרבייג'ן", countryCode: "az", time: "עד 3 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת", validity: "90 ימים", maxStay: "עד 30 ימים", govFee: 35, serviceFee: 45 },
+  { country: "דובאי", countryCode: "ae", time: "עד 3-5 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת", validity: "בהתאם לאישור הרשויות", maxStay: "עד 90 ימים בתוך תקופה של 180 ימים", govFee: 150, serviceFee: 45, keywords: ["איחוד האמירויות", "uae"] },
+  { country: "קמבודיה", countryCode: "kh", time: "עד 3 ימי עסקים", type: "ויזת תיירות, כניסה אחת", validity: "90 ימים", maxStay: "עד 30 ימים", govFee: 40, serviceFee: 45 },
+  { country: "קמבודיה", countryCode: "kh", time: "עד 3-5 ימי עבודה", type: "ויזת עסקים, כניסה אחת", validity: "90 ימים", maxStay: "עד 30 ימים", govFee: 50, serviceFee: 45 },
+  { country: "קנדה", countryCode: "ca", time: "עד 72 שעות", type: "אישור כניסה אלקטרוני eTA, תיירות/עסקים/טרנזיט, כניסות מרובות", validity: "עד 5 שנים או עד פקיעת הדרכון", maxStay: "עד 6 חודשים", govFee: 8, serviceFee: 35 },
+  { country: "אתיופיה", countryCode: "et", time: "עד 3 ימי עבודה", type: "ויזת תיירות, כניסה אחת", validity: "90 ימים", maxStay: "עד 30 ימים", govFee: 85, serviceFee: 65 },
+  { country: "אתיופיה", countryCode: "et", time: "עד 3 ימי עבודה", type: "ויזת עסקים, כניסה אחת", validity: "90 ימים", maxStay: "עד 30 ימים", govFee: 52, serviceFee: 65 },
+  { country: "הודו", countryCode: "in", time: "עד 3 ימי עבודה", type: "ויזת תיירות אלקטרונית, שתי כניסות", validity: "30 ימים", maxStay: "עד 30 ימים", govFee: 15, serviceFee: 35 },
+  { country: "הודו", countryCode: "in", time: "עד 3 ימי עבודה", type: "ויזת תיירות אלקטרונית, כניסות מרובות", validity: "שנה אחת", maxStay: "עד 90 ימים בכל כניסה", govFee: 50, serviceFee: 45 },
+  { country: "הודו", countryCode: "in", time: "עד 3 ימי עבודה", type: "ויזת תיירות אלקטרונית, כניסות מרובות", validity: "5 שנים", maxStay: "עד 90 ימים בכל כניסה", govFee: 225, serviceFee: 65 },
+  { country: "הודו", countryCode: "in", time: "עד 3 ימי עבודה", type: "ויזת עסקים אלקטרונית, כניסות מרובות", validity: "שנה אחת", maxStay: "עד 180 ימים", govFee: 130, serviceFee: 65 },
+  { country: "ישראל", countryCode: "il", time: "עד 2-3 ימי עבודה", type: "אישור כניסה לישראל, תיירות / עסקים, כניסות מרובות", validity: "עד שנתיים או עד פקיעת הדרכון", maxStay: "עד 30 ימים", govFee: 10, serviceFee: 25 },
+  { country: "קניה", countryCode: "ke", time: "עד 3 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת", validity: "90 ימים", maxStay: "עד 90 ימים", govFee: 33, serviceFee: 45 },
+  { country: "קניה", countryCode: "ke", time: "עד 3 ימי עבודה", type: "ויזת תיירות / עסקים, כניסות מרובות", validity: "שנה אחת", maxStay: "עד 90 ימים בכל כניסה", govFee: 330, serviceFee: 65 },
+  { country: "לאוס", countryCode: "la", time: "עד 3 ימי עבודה", type: "ויזת תיירות, כניסה אחת", validity: "60 ימים", maxStay: "עד 30 ימים", govFee: 60, serviceFee: 45 },
+  { country: "מדגסקר", countryCode: "mg", time: "עד 3 ימי עבודה", type: "ויזת תיירות, כניסה אחת", validity: "15 ימים", maxStay: "עד 15 ימים", govFee: 15, serviceFee: 25 },
+  { country: "מרוקו", countryCode: "ma", time: "עד 3-6 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת - נוהל רגיל", validity: "180 ימים", maxStay: "עד 30 ימים", govFee: 90, serviceFee: 45 },
+  { country: "מרוקו", countryCode: "ma", time: "עד 24-72 שעות", type: "ויזת תיירות / עסקים, כניסה אחת - נוהל מהיר", validity: "180 ימים", maxStay: "עד 30 ימים", govFee: 125, serviceFee: 65 },
+  { country: "מיאנמר", countryCode: "mm", time: "עד 3 ימי עבודה", type: "ויזת תיירות, כניסה אחת", validity: "90 ימים", maxStay: "עד 28 ימים", govFee: 55, serviceFee: 45 },
+  { country: "מיאנמר", countryCode: "mm", time: "עד 3-5 ימי עבודה", type: "ויזת עסקים, כניסה אחת", validity: "90 ימים", maxStay: "עד 70 ימים", govFee: 75, serviceFee: 65 },
+  { country: "ניו זילנד", countryCode: "nz", time: "עד 72 שעות", type: "אישור כניסה אלקטרוני NZeTA, תיירות / עסקים, כניסות מרובות", validity: "שנתיים", maxStay: "עד 3 חודשים בכל ביקור", govFee: 85, serviceFee: 65 },
+  { country: "סין", countryCode: "cn", time: "5 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת - נוהל רגיל", validity: "עד חצי שנה פחות מתוקף הדרכון, לפי החלטת הקונסוליה בלבד", maxStay: "עד 90 ימים", govFee: 90, serviceFee: 65 },
+  { country: "סין", countryCode: "cn", time: "3 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת - נוהל מהיר", validity: "עד חצי שנה פחות מתוקף הדרכון, לפי החלטת הקונסוליה בלבד", maxStay: "עד 90 ימים", govFee: 125, serviceFee: 65 },
+  { country: "סין", countryCode: "cn", time: "3 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת - נוהל דחוף", validity: "עד חצי שנה פחות מתוקף הדרכון, לפי החלטת הקונסוליה בלבד", maxStay: "עד 90 ימים", govFee: 165, serviceFee: 65 },
+  { country: "סין", countryCode: "cn", time: "בהתאם להשלמת פרטי הנוסע", type: "מילוי טופס בקשה רשמי לויזה", validity: "לא רלוונטי", maxStay: "-", govFee: 0, serviceFee: 50 },
+  { country: "סיישל", countryCode: "sc", time: "עד 24-72 שעות", type: "אישור כניסה לתיירות / עסקים, כניסה אחת", validity: "30 ימים", maxStay: "עד 90 ימים", govFee: 20, serviceFee: 30 },
+  { country: "דרום קוריאה", countryCode: "kr", time: "עד 72 שעות", type: "אישור כניסה אלקטרוני K-ETA, תיירות / עסקים, כניסות מרובות", validity: "3 שנים", maxStay: "עד 90 ימים", govFee: 8, serviceFee: 30 },
+  { country: "סרי לנקה", countryCode: "lk", time: "עד 24-72 שעות", type: "ויזת תיירות / עסקים, שתי כניסות", validity: "30 ימים", maxStay: "עד 30 ימים", govFee: 60, serviceFee: 45 },
+  { country: "טנזניה", countryCode: "tz", time: "עד 10 ימים", type: "ויזת תיירות, כניסה אחת", validity: "90 ימים", maxStay: "עד 90 ימים", govFee: 55, serviceFee: 45 },
+  { country: "טנזניה", countryCode: "tz", time: "עד 10 ימים", type: "ויזת עסקים, כניסה אחת", validity: "90 ימים", maxStay: "עד 90 ימים", govFee: 270, serviceFee: 65 },
+  { country: "תאילנד", countryCode: "th", time: "מיידי", type: "כרטיס הגעה דיגיטלי, תיירות / עסקים", validity: "כניסה אחת", maxStay: "עד 30 ימים", govFee: 0, serviceFee: 25 },
+  { country: "בריטניה", countryCode: "gb", time: "עד 3 ימי עבודה", type: "אישור כניסה אלקטרוני ETA, תיירות / עסקים, כניסות מרובות", validity: "שנתיים או עד פקיעת הדרכון", maxStay: "עד 6 חודשים בכל כניסה", govFee: 29, serviceFee: 35, keywords: ["אנגליה", "uk", "united kingdom"] },
+  { country: "ארה\"ב", countryCode: "us", time: "עד 72 שעות", type: "אישור כניסה אלקטרוני ESTA, תיירות / עסקים, כניסות מרובות", validity: "שנתיים או עד פקיעת הדרכון", maxStay: "עד 90 ימים בכל כניסה", govFee: 40, serviceFee: 35, keywords: ["אמריקה", "usa", "united states"] },
+  { country: "ארה\"ב", countryCode: "us", time: "בהתאם לזמינות תורים; לאחר ראיון לרוב 7-14 ימי עבודה", type: "ויזת B1/B2 לארה\"ב, תיירות / עסקים, כניסות מרובות", validity: "עד 10 שנים", maxStay: "לרוב עד 6 חודשים, לפי החלטת קצין ההגירה", govFee: 205, serviceFee: 85, keywords: ["אמריקה", "usa", "united states", "B1/B2"] },
+  { country: "וייטנאם", countryCode: "vn", time: "עד 3-6 ימי עבודה", type: "ויזת תיירות / עסקים, כניסה אחת", validity: "עד 90 ימים", maxStay: "עד 90 ימים", govFee: 55, serviceFee: 45 },
+  { country: "וייטנאם", countryCode: "vn", time: "עד 3-6 ימי עבודה", type: "ויזת תיירות / עסקים, כניסות מרובות", validity: "עד 90 ימים", maxStay: "עד 90 ימים", govFee: 80, serviceFee: 45 },
+  { country: "משלוח UPS", icon: "📦", time: "בהתאם ללוחות הזמנים של חברת השילוח", type: "שירות משלוח מסמכים באמצעות UPS", validity: "לא רלוונטי", maxStay: "-", govFee: 20, serviceFee: 5, keywords: ["משלוח", "דרכון", "מסמכים", "UPS"] },
+];
+
+const formatUsd = (value: number) => `$${value.toFixed(2)}`;
+
+const popularCountries = ["ארה\"ב", "בריטניה", "הודו", "וייטנאם", "סין", "קנדה", "תאילנד", "אוסטרליה"];
+
+const normalizeText = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[״"']/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const scrollToSection = (id: string) => {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+const VISA_WHATSAPP_NUMBER = "97246700998";
+const VISA_WHATSAPP_DISPLAY = "+972 4-670-0998";
+const VISA_EMAIL = "visa.dept@amsalem.com";
+const AMSVISA_LOGO_SRC = "/amsvisa-logo.jpg";
+const AMSALEM_LOGO_SRC = "/amsalem-logo.png";
+
+const buildRequestMessage = (item: VisaItem) => {
+  const total = item.govFee + item.serviceFee;
+  const lines = [
+    "שלום מחלקת הויזות של אמסלם,",
+    `אשמח לפתוח בקשה עבור: ${item.country}`,
+    `סוג אשרה: ${item.type}`,
+    `תוקף האשרה: ${item.validity}`,
+    `זמן טיפול משוער: ${item.time}`,
+    `עלות כוללת לנוסע: ${formatUsd(total)}`,
+    "תודה.",
+  ];
+
+  return lines.join(String.fromCharCode(10));
+};
+
+const buildWhatsAppLink = (item: VisaItem) => {
+  const text = encodeURIComponent(buildRequestMessage(item));
+  return `https://wa.me/${VISA_WHATSAPP_NUMBER}?text=${text}`;
+};
+
+const buildWhatsAppBaseLink = () => `https://wa.me/${VISA_WHATSAPP_NUMBER}`;
+
+const buildEmailLink = (item: VisaItem) => {
+  const subject = encodeURIComponent(`בקשה לפתיחת טיפול ויזה - ${item.country}`);
+  const body = encodeURIComponent(buildRequestMessage(item));
+
+  return `mailto:${VISA_EMAIL}?subject=${subject}&body=${body}`;
+};
+
+const buildEmailBaseLink = () => `mailto:${VISA_EMAIL}`;
+
+const groupVisaData = (items: VisaItem[]): VisaGroup[] => {
+  const groups = new Map<string, VisaGroup>();
+
+  items.forEach((item) => {
+    const existingGroup = groups.get(item.country);
+
+    if (existingGroup) {
+      existingGroup.items.push(item);
+      return;
+    }
+
+    groups.set(item.country, {
+      country: item.country,
+      countryCode: item.countryCode,
+      icon: item.icon,
+      items: [item],
+    });
+  });
+
+  return Array.from(groups.values());
+};
+
+function Logo() {
+  return (
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      className="flex justify-center"
+      aria-label="חזרה לראש העמוד"
+    >
+      <img
+        src={AMSVISA_LOGO_SRC}
+        alt="AMSVISA - ויזות לכל העולם בהליך קל ומהיר"
+        className="h-16 w-auto object-contain md:h-20"
+      />
+    </button>
+  );
+}
+
+function CountryMark({ item }: { item: Pick<VisaItem, "country" | "countryCode" | "icon"> }) {
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white shadow-sm">
+      {item.icon ? (
+        <span className="text-sm" role="img" aria-label={item.country}>{item.icon}</span>
+      ) : item.countryCode ? (
+        <img
+          src={`https://flagcdn.com/w40/${item.countryCode}.png`}
+          alt={`דגל ${item.country}`}
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <Globe className="h-4 w-4 text-slate-400" />
+      )}
+    </div>
+  );
+}
+
+function ContactCard({
+  href,
+  icon,
+  label,
+  value,
+  external = false,
+  variant = "default",
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  external?: boolean;
+  variant?: "default" | "whatsapp" | "email";
+}) {
+  const isWhatsApp = variant === "whatsapp";
+  const isEmail = variant === "email";
+
+  return (
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      className={`group relative overflow-hidden rounded-3xl border border-slate-700 bg-[#2a2a2a] p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
+        isWhatsApp
+          ? "hover:border-[#25D366]/60 hover:shadow-[#25D366]/20"
+          : isEmail
+            ? "hover:border-[#fca5a5]/60 hover:shadow-[#fca5a5]/20"
+            : "hover:border-[#00B4D8]/60 hover:shadow-cyan-500/10"
+      }`}
+    >
+      <div
+        className={`absolute inset-0 bg-gradient-to-b to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${
+          isWhatsApp ? "from-[#25D366]/15" : isEmail ? "from-[#fecaca]/20" : "from-cyan-400/10"
+        }`}
+      />
+      <div className="relative">
+        <div
+          className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#3E3E3E] text-white transition-all duration-300 group-hover:scale-110 ${
+            isWhatsApp ? "group-hover:bg-[#25D366]" : isEmail ? "group-hover:bg-[#f87171]" : "group-hover:bg-[#00B4D8]"
+          }`}
+        >
+          {icon}
+        </div>
+        <h3 className="mb-2 text-sm font-bold text-slate-400">{label}</h3>
+        <p className="font-black tracking-wide text-white" dir="ltr">{value}</p>
+      </div>
+    </a>
+  );
+}
+
+function PopularCountries({
+  onSelect,
+  onClear,
+  hasActiveSearch,
+}: {
+  onSelect: (country: string) => void;
+  onClear: () => void;
+  hasActiveSearch: boolean;
+}) {
+  return (
+    <div className="mx-auto mt-8 max-w-4xl rounded-[28px] border border-cyan-100 bg-white/85 p-5 shadow-[0_16px_45px_rgba(0,180,216,0.10)] backdrop-blur-md">
+      <div className="mb-4 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="flex items-center gap-2 text-sm font-black text-slate-600">
+          <Sparkles className="h-4 w-4 text-[#00B4D8]" />
+          מדינות פופולריות לחיפוש מהיר
+        </div>
+        {hasActiveSearch && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-black text-slate-500 transition-all hover:border-[#00B4D8]/40 hover:bg-white hover:text-[#00B4D8]"
+          >
+            הצג הכל
+          </button>
+        )}
+      </div>
+      <div className="flex flex-wrap justify-center gap-2.5">
+        {popularCountries.map((country) => (
+          <button
+            key={country}
+            type="button"
+            onClick={() => onSelect(country)}
+            className="rounded-full border border-cyan-100 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#00B4D8] hover:bg-cyan-50 hover:text-[#00B4D8] hover:shadow-md"
+          >
+            {country}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VisaRequestButton({ item }: { item: VisaItem }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2" style={{ fontFamily: "Tahoma, sans-serif" }}>
+      <a
+        href={buildWhatsAppLink(item)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#1ebe5d] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 focus:ring-offset-2"
+        aria-label={`פתיחת בקשה בוואטסאפ עבור ${item.country}`}
+      >
+        <MessageCircle className="h-4 w-4" />
+        WhatsApp
+      </a>
+
+      <a
+        href={buildEmailLink(item)}
+        className="inline-flex items-center justify-center gap-2 rounded-full border border-[#00B4D8]/25 bg-white px-4 py-2 text-sm font-bold text-[#00B4D8] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#00B4D8] hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#00B4D8]/30 focus:ring-offset-2"
+        aria-label={`פתיחת בקשה במייל עבור ${item.country}`}
+      >
+        <Mail className="h-4 w-4" />
+        מייל
+      </a>
+    </div>
+  );
+}
+
+function TermsModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+      <button type="button" className="absolute inset-0 bg-slate-950/45 backdrop-blur-md" onClick={onClose} aria-label="סגירת החלון" />
+
+      <div className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-white p-6">
+          <h2 className="text-2xl font-black text-[#3E3E3E]">תנאי שימוש והגבלת אחריות</h2>
+          <button type="button" onClick={onClose} className="rounded-full p-2 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-900" aria-label="סגירה">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="space-y-8 overflow-y-auto bg-slate-50/70 p-6 leading-relaxed text-slate-700 md:p-10">
+          <NoticeSection number="1" title="תפקידנו והגבלת אחריות">
+            <p>אמסלם טורס בע״מ משמשת כגורם מתווך בין הלקוח לבין רשויות ההגירה, שגרירויות וספקי שירות נוספים. החברה פועלת במקצועיות, בשקיפות ותוך הקפדה על מסירת מידע מעודכן ככל הניתן.</p>
+            <p className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4 font-bold text-red-700">
+              אישור הבקשה, משך הטיפול, תוקף האשרה ותנאי הכניסה נתונים לשיקול דעתן הבלעדי של הרשויות המוסמכות.
+            </p>
+          </NoticeSection>
+
+          <NoticeSection number="2" title="אחריות הלקוח">
+            <ul className="space-y-3">
+              {[
+                "לוודא כי הדרכון בתוקף של לפחות שישה חודשים ממועד החזרה המשוער.",
+                "לבדוק מראש את דרישות הכניסה בהתאם לסוג הדרכון, היעד ומטרת הנסיעה.",
+                "להעביר את מלוא המסמכים באופן מלא, ברור ומדויק בהתאם להנחיות המחלקה.",
+                "לעדכן מראש על דרכונים זרים, נסיעות קודמות או נסיבות מיוחדות שעשויות להשפיע על הבקשה.",
+              ].map((text) => (
+                <li key={text} className="flex gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#00B4D8]" />
+                  <span>{text}</span>
+                </li>
+              ))}
+            </ul>
+          </NoticeSection>
+
+          <NoticeSection number="3" title="תהליך הטיפול">
+            <p>תחילת הטיפול מותנית בהעברת כלל המסמכים הנדרשים ובתשלום מלא עבור השירות. במהלך התהליך ייתכן שתידרש השלמת מסמכים נוספים בהתאם לדרישות הרשויות.</p>
+            <div className="mt-4 flex gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-900">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
+              <p>זמני הטיפול וההנפקה הינם משוערים ועשויים להשתנות בהתאם לעומסי הרשויות, תקינות המסמכים, דרישות נוספות מצד השגרירות / רשות ההגירה ומועדי פעילות בארץ ובמדינת היעד. תוקף האשרה ומשך השהייה הסופי נקבעים על ידי הרשויות בלבד.</p>
+            </div>
+            <div className="mt-4 flex gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm font-medium text-indigo-900">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-indigo-500" />
+              <p>זמני הטיפול משוערים בלבד ונמדדים לרוב בימי עבודה, ללא סופי שבוע, חגים, זמני שילוח, השלמות מסמכים או עיכובים מצד הרשויות. תוקף האשרה ומשך השהייה הסופי נקבעים על ידי הרשויות בלבד.</p>
+            </div>
+            <div className="mt-4 flex gap-3 rounded-xl border border-amber-100 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+              <p><strong>גילוי נאות:</strong> המחירים וזמני הטיפול עשויים להשתנות בהתאם לעדכוני הרשויות, זמינות תורים, דרישות השגרירות ושינויים במדיניות מדינות היעד.</p>
+            </div>
+          </NoticeSection>
+
+          <NoticeSection number="4" title="ביטולים והחזרים">
+            <p>בקשת ביטול תתבצע בכתב בלבד לכתובת המחלקה, בציון שם מלא ומספר הזמנה. אגרות רשויות אינן ניתנות להחזר לאחר הגשת הבקשה לרשות הרלוונטית.</p>
+          </NoticeSection>
+
+          <div className="rounded-2xl border border-cyan-100 bg-gradient-to-r from-cyan-50 to-blue-50 p-8 text-center shadow-sm">
+            <p className="text-sm font-medium text-slate-700">הזמנת השירות מהווה אישור מצד המזמין לתנאים אלה, לרבות מדיניות הביטול וההחזר.</p>
+            <div className="mx-auto my-6 h-1 w-12 rounded-full bg-[#00B4D8]/50" />
+            <p className="text-lg font-black text-[#00B4D8]">אמסלם טורס מחויבת לשירות מקצועי, אמין ומדויק.</p>
+          </div>
+        </div>
+
+        <div className="flex justify-end border-t border-slate-100 bg-white p-6">
+          <button type="button" onClick={onClose} className="rounded-full bg-[#3E3E3E] px-10 py-3 font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-[#1a1a1a] hover:shadow-lg">
+            הבנתי וקראתי, סגור
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NoticeSection({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <h3 className="mb-4 flex items-center gap-2 text-xl font-black text-[#00B4D8]">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100 text-sm">{number}</span>
+        {title}
+      </h3>
+      <div className="space-y-4 pr-10">{children}</div>
+    </section>
+  );
+}
+
+export default function App() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+
+  const filteredData = useMemo(() => {
+    const query = normalizeText(searchTerm);
+    if (!query) return visaData;
+
+    return visaData.filter((item) => {
+      const searchableText = normalizeText([
+        item.country,
+        item.time,
+        item.type,
+        item.validity,
+        item.maxStay,
+        ...(item.keywords ?? []),
+      ].join(" "));
+
+      return searchableText.includes(query);
+    });
+  }, [searchTerm]);
+
+  const groupedFilteredData = useMemo(() => groupVisaData(filteredData), [filteredData]);
+
+  return (
+    <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 selection:bg-[#00B4D8] selection:text-white" style={{ fontFamily: "Tahoma, sans-serif" }}>
+      <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 shadow-sm backdrop-blur-md">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center">
+            <Logo />
+          </div>
+
+          <nav className="mt-4 hidden items-center justify-center gap-8 sm:flex" aria-label="ניווט ראשי">
+            <button type="button" onClick={() => scrollToSection("table")} className="group relative text-sm font-bold text-slate-600 transition-colors hover:text-[#00B4D8]">
+              מחירון ויזות
+              <span className="absolute -bottom-1 right-0 h-0.5 w-0 bg-[#00B4D8] transition-all group-hover:w-full" />
+            </button>
+            <button type="button" onClick={() => scrollToSection("about")} className="group relative text-sm font-bold text-slate-600 transition-colors hover:text-[#00B4D8]">
+              אודות
+              <span className="absolute -bottom-1 right-0 h-0.5 w-0 bg-[#00B4D8] transition-all group-hover:w-full" />
+            </button>
+            <button type="button" onClick={() => scrollToSection("contact")} className="flex items-center gap-2 rounded-full bg-[#24313d] px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1f2937] hover:shadow-lg">
+              <Phone className="h-4 w-4" />
+              צור קשר
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <section className="relative overflow-hidden border-b border-cyan-100 bg-gradient-to-b from-[#eef9ff] via-white to-[#f8fbfd] px-4 pb-28 pt-20">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-cyan-100/80 blur-3xl" />
+          <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-blue-100/70 blur-3xl" />
+          <div className="absolute left-1/2 top-28 h-40 w-40 -translate-x-1/2 rounded-full bg-white blur-3xl" />
+          <div className="absolute inset-0 opacity-[0.35]" style={{ backgroundImage: "radial-gradient(rgba(0,180,216,.18) 1px, transparent 1px)", backgroundSize: "34px 34px" }} />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl text-center">
+          <div className="mb-7 inline-flex items-center gap-3 rounded-full border border-cyan-100 bg-white/95 px-4 py-2.5 shadow-[0_8px_24px_rgba(0,180,216,0.10)] backdrop-blur-sm">
+            <span className="flex items-center justify-center rounded-full bg-slate-50 px-2.5 py-1.5">
+              <img
+                src={AMSALEM_LOGO_SRC}
+                alt="Amsalem Tours"
+                className="h-6 w-auto object-contain"
+              />
+            </span>
+            <span className="text-sm font-black text-[#00B4D8]">
+              שירותי ויזות ואשרות מבית אמסלם טורס
+            </span>
+          </div>
+
+          <h1 className="mx-auto max-w-5xl text-4xl font-black leading-tight tracking-tight text-[#24313d] md:text-5xl lg:text-6xl">
+            מחירון ויזות ואשרות כניסה
+            <span className="mt-3 block text-[#00B4D8]">
+              למגזר העסקי והפרטי
+            </span>
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-3xl text-lg font-medium leading-relaxed text-slate-600 md:text-xl">
+            איתור מהיר של דרישות כניסה, עלויות וזמני טיפול, עם ליווי מקצועי מלא מרגע פתיחת הבקשה ועד לקבלת האשרה.
+          </p>
+
+          <div className="mx-auto mt-8 flex max-w-4xl flex-wrap justify-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-100 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">
+              <ShieldCheck className="h-4 w-4 text-[#00B4D8]" />
+              שירות מקצועי ואמין
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-100 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">
+              <CheckCircle2 className="h-4 w-4 text-[#00B4D8]" />
+              עלויות וזמנים במקום אחד
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-100 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">
+              <Clock className="h-4 w-4 text-[#00B4D8]" />
+              טיפול מהיר ומסודר
+            </div>
+          </div>
+
+          <div className="group relative mx-auto mt-10 max-w-2xl">
+            <div className="absolute -inset-1 rounded-[32px] bg-gradient-to-r from-cyan-100 to-blue-100 opacity-90 blur" />
+            <div className="relative flex items-center rounded-[32px] border border-cyan-100 bg-white p-2.5 shadow-[0_18px_55px_rgba(15,23,42,0.10)]">
+              <div className="pl-5 pr-4 text-slate-400">
+                <Search className="h-6 w-6 text-[#00B4D8]" />
+              </div>
+              <input
+                type="search"
+                className="h-14 w-full flex-1 border-0 bg-transparent text-slate-900 outline-none placeholder:text-slate-400 sm:text-lg"
+                placeholder="חיפוש מדינת יעד, סוג אשרה או שירות..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                aria-label="חיפוש במחירון"
+              />
+              {searchTerm && (
+                <button type="button" onClick={() => setSearchTerm("")} className="ml-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700" aria-label="ניקוי חיפוש">
+                  נקה
+                </button>
+              )}
+            </div>
+          </div>
+
+          <PopularCountries
+            hasActiveSearch={Boolean(searchTerm)}
+            onClear={() => setSearchTerm("")}
+            onSelect={(country) => {
+              setSearchTerm(country);
+              setTimeout(() => scrollToSection("table"), 80);
+            }}
+          />
+        </div>
+      </section>
+
+      <main id="table" className="relative z-20 mx-auto -mt-12 max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-[34px] border border-cyan-100/70 bg-white shadow-[0_22px_80px_rgba(15,23,42,0.08)]">
+          <div className="relative overflow-hidden border-b border-cyan-50 bg-gradient-to-l from-white via-cyan-50/70 to-white p-6 md:p-8">
+            <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-cyan-100/60 blur-3xl" />
+            <div className="relative flex flex-col items-start justify-between gap-5 md:flex-row md:items-center">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#00B4D8] text-white shadow-lg shadow-cyan-500/20">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-[#24313d]">מחירון ויזות ואשרות</h2>
+                  <p className="mt-1 max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
+                    כל מדינה מרוכזת בכרטיס אחד, עם טבלת מסלולים ברורה הכוללת תוקף אשרה, שהייה מקסימלית ביעד, אגרת רשויות ודמי טיפול.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
+                <span className="rounded-full border border-cyan-100 bg-white px-3 py-1.5 shadow-sm">מחירים בדולר ארה״ב</span>
+                <span className="rounded-full border border-cyan-100 bg-white px-3 py-1.5 shadow-sm">סה״כ לאדם</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-b from-white to-slate-50/70 p-4 md:p-6 lg:p-8">
+            {groupedFilteredData.length ? (
+              <div className="grid grid-cols-1 gap-6">
+                {groupedFilteredData.map((group) => (
+                  <article key={group.country} className="overflow-hidden rounded-[30px] border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:border-cyan-100 hover:shadow-xl hover:shadow-cyan-500/5">
+                    <div className="flex flex-col gap-4 border-b border-slate-100 bg-gradient-to-l from-cyan-50/70 via-white to-white p-5 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white bg-white shadow-md shadow-cyan-500/10">
+                          <CountryMark item={{ country: group.country, countryCode: group.countryCode, icon: group.icon }} />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-black text-[#24313d]">{group.country}</h3>
+                          <p className="mt-1 text-sm font-bold text-[#00B4D8]">{group.items.length} מסלולי אשרה זמינים</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="min-w-[1280px] w-full border-collapse text-right">
+                        <thead className="bg-slate-50/90">
+                          <tr>
+                            {[
+                              "סוג אשרה / אישור כניסה",
+                              "זמן טיפול",
+                              "תוקף האשרה",
+                              "שהייה מקסימלית ביעד",
+                              "אגרת רשויות",
+                              "דמי טיפול",
+                              "סה״כ לאדם",
+                              "פתיחת בקשה",
+                            ].map((header) => (
+                              <th key={header} scope="col" className="whitespace-nowrap border-b border-slate-100 px-5 py-4 text-xs font-black text-slate-500">
+                                {header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+
+                        <tbody className="divide-y divide-slate-100">
+                          {group.items.map((item) => {
+                            const total = item.govFee + item.serviceFee;
+                            const routeKey = `${item.country}-${item.type}-${item.time}-${item.govFee}-${item.serviceFee}`;
+
+                            return (
+                              <tr key={routeKey} className="transition-colors hover:bg-cyan-50/25">
+                                <td className="min-w-[340px] px-5 py-4 text-sm font-bold leading-relaxed text-[#24313d]">
+                                  {item.type}
+                                </td>
+
+                                <td className="whitespace-nowrap px-5 py-4">
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-xs font-black text-[#00B4D8]">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    {item.time}
+                                  </span>
+                                </td>
+
+                                <td className="min-w-[180px] px-5 py-4 text-sm font-semibold leading-relaxed text-slate-600">
+                                  {item.validity}
+                                </td>
+
+                                <td className="min-w-[160px] px-5 py-4 text-sm font-medium leading-relaxed text-slate-600">
+                                  {item.maxStay}
+                                </td>
+
+                                <td className="whitespace-nowrap px-5 py-4 text-sm font-bold text-slate-500">
+                                  {formatUsd(item.govFee)}
+                                </td>
+
+                                <td className="whitespace-nowrap px-5 py-4 text-sm font-bold text-slate-500">
+                                  {formatUsd(item.serviceFee)}
+                                </td>
+
+                                <td className="whitespace-nowrap bg-slate-50/70 px-5 py-4">
+                                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#00B4D8] to-cyan-400 px-4 py-1.5 text-sm font-black text-white shadow-md shadow-cyan-500/20">
+                                    {formatUsd(total)}
+                                  </span>
+                                </td>
+
+                                <td className="whitespace-nowrap px-5 py-4">
+                                  <VisaRequestButton item={item} />
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[28px] border border-slate-100 bg-white px-6 py-20 text-center text-slate-500 shadow-sm">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50">
+                  <Search className="h-8 w-8 text-slate-300" />
+                </div>
+                <p className="text-lg font-medium text-slate-600">לא נמצאו תוצאות עבור “{searchTerm}”</p>
+                <p className="mt-1 text-sm text-slate-400">נסו לחפש מדינה, סוג אשרה או שירות אחר.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+
+      <section id="about" className="border-t border-cyan-50 bg-gradient-to-b from-white to-slate-50 py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 flex flex-col items-center text-center">
+            <span className="mb-2 text-sm font-bold uppercase tracking-wider text-[#00B4D8]">אודותינו</span>
+            <h2 className="mb-6 text-3xl font-bold text-[#3E3E3E] md:text-4xl">מחלקת הויזות של אמסלם טורס</h2>
+            <p className="max-w-3xl text-lg leading-relaxed text-slate-600">
+              עם ניסיון של למעלה מ־30 שנה בתחום הנסיעות העסקיות והפרטיות, אנו מלווים לקוחות בתהליכי הנפקת אשרות תוך מקצועיות, דיוק ושקיפות מלאה.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {[
+              { icon: <CheckCircle2 className="h-7 w-7" />, title: "מעטפת שירות מלאה", text: "הנפקת ויזות תיירות, עסקים, עבודה ולימודים, כולל ליווי בהכנת מסמכים וטיפול בבקשות דחופות." },
+              { icon: <ShieldCheck className="h-7 w-7" />, title: "שקיפות ואמינות", text: "הצגת עלויות, זמני טיפול ותנאי שירות בצורה ברורה, עם מענה מקצועי לאורך כל הדרך." },
+              { icon: <Clock className="h-7 w-7" />, title: "יתרון מקצועי", text: "היכרות עמוקה עם דרישות השגרירויות והרשויות, והתמודדות מהירה עם שינויי נהלים." },
+            ].map((card) => (
+              <article key={card.title} className="rounded-3xl border border-slate-100/70 bg-slate-50 p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-cyan-500/5">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-100 bg-white text-[#00B4D8] shadow-sm">
+                  {card.icon}
+                </div>
+                <h3 className="mb-3 text-xl font-bold text-[#3E3E3E]">{card.title}</h3>
+                <p className="text-sm font-medium leading-relaxed text-slate-600">{card.text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="relative overflow-hidden bg-[#24313d] py-24">
+        <div className="pointer-events-none absolute inset-0 opacity-20">
+          <div className="absolute right-0 top-0 h-full w-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#00B4D8] via-transparent to-transparent opacity-30" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">אנחנו כאן לכל שאלה</h2>
+            <p className="mx-auto max-w-2xl text-lg text-slate-300">צוות מחלקת הויזות זמין לליווי, בדיקת דרישות כניסה וטיפול בבקשות.</p>
+          </div>
+
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
+            <ContactCard href="tel:+97249700900" icon={<Phone className="h-7 w-7" />} label="מוקד טלפוני" value="04-9700900" />
+            <ContactCard href={buildWhatsAppBaseLink()} icon={<MessageCircle className="h-7 w-7" />} label="WhatsApp" value={VISA_WHATSAPP_DISPLAY} external variant="whatsapp" />
+            <ContactCard href={buildEmailBaseLink()} icon={<Mail className="h-7 w-7" />} label="דוא״ל" value={VISA_EMAIL} variant="email" />
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-800 bg-[#1a1a1a] py-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:px-6 md:flex-row lg:px-8">
+          <div className="flex items-center text-2xl font-black leading-none tracking-tighter opacity-80 transition-opacity hover:opacity-100">
+            <span className="text-white">AMS</span>
+            <span className="text-[#00B4D8]">VISA</span>
+          </div>
+          <div className="text-center text-sm font-medium text-slate-500">© {new Date().getFullYear()} אמסלם טורס בע״מ. כל הזכויות שמורות.</div>
+          <button type="button" onClick={() => setIsTermsOpen(true)} className="flex items-center gap-2 text-sm font-bold text-slate-400 transition-colors hover:text-white">
+            תנאי שימוש והגבלת אחריות
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+        </div>
+      </footer>
+
+      {isTermsOpen && <TermsModal onClose={() => setIsTermsOpen(false)} />}
+    </div>
+  );
+}
